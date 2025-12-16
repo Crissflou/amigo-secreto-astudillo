@@ -84,7 +84,7 @@
 
 <body>
   <div class="card">
-    <h1 class="family-title">FAMILIA ASTUDILLOS</h1>
+    <h1 class="family-title">FAMILIA ASTUDILLO</h1>
     <p class="event-title">Amigo Secreto</p>
 
     <p class="subtitle">
@@ -121,7 +121,6 @@
 
   <script>
     // Tokens privados -> resultado (asignación única, sin repetidos, sin auto-asignación)
-    // IMPORTANTE: el usuario se identifica SOLO por token (?token=...)
     const byToken = {
       "evelyn_q4m7z": {
         name: "Evelyn",
@@ -162,9 +161,7 @@
       "papi_j7s1d": {
         name: "Papi",
         target: "Andrea",
-        gifts: [
-          "Neorayen"
-        ]
+        gifts: [ "Neorayen" ]
       },
       "maximo_w2f9g": {
         name: "Maximo",
@@ -214,9 +211,7 @@
       "cristobal_v5r8a": {
         name: "Cristobal",
         target: "Mami",
-        gifts: [
-          "Cadena de plata"
-        ]
+        gifts: [ "Cadena de plata" ]
       },
       "catalina_x2d6e": {
         name: "Catalina",
@@ -231,8 +226,32 @@
       }
     };
 
+    // Alias para que funcione aunque manden token corto o usen ?user=
+    const aliasToFullToken = {
+      "evelyn": "evelyn_q4m7z",
+      "andrea": "andrea_h9k2p",
+      "antonia": "antonia_r5t8n",
+      "matias": "matias_c3v6x",
+      "papi": "papi_j7s1d",
+      "maximo": "maximo_w2f9g",
+      "cristina": "cristina_b8l4q",
+      "mami": "mami_u6y3h",
+      "marcelo": "marcelo_n1p7k",
+      "sebita": "sebita_t9c2m",
+      "cristobal": "cristobal_v5r8a",
+      "catalina": "catalina_x2d6e"
+    };
+
     const params = new URLSearchParams(window.location.search);
-    const token = (params.get("token") || "").trim();
+
+    // Se acepta token completo, token corto, o user (compatibilidad)
+    let raw = (params.get("token") || params.get("user") || "").trim().toLowerCase();
+
+    // Normaliza espacios raros (a veces WhatsApp agrega)
+    raw = raw.replace(/\s+/g, "");
+
+    // Si viene token completo (contiene "_"), se usa tal cual; si no, se resuelve por alias
+    const resolvedToken = raw.includes("_") ? raw : (aliasToFullToken[raw] || "");
 
     const participantNameEl = document.getElementById("participantName");
     const rouletteSectionEl = document.getElementById("rouletteSection");
@@ -244,16 +263,16 @@
     const giftListEl = document.getElementById("giftList");
 
     const STORAGE_PREFIX = "amigoSecretoResultado-token-";
-    const userData = byToken[token];
+    const userData = byToken[resolvedToken];
 
-    if (!token || !userData) {
+    if (!resolvedToken || !userData) {
       errorBoxEl.style.display = "block";
       errorBoxEl.textContent = "Enlace inválido o incompleto. Revisa que abriste el link correcto.";
     } else {
       participantNameEl.textContent = userData.name;
       rouletteSectionEl.style.display = "block";
 
-      const saved = localStorage.getItem(STORAGE_PREFIX + token);
+      const saved = localStorage.getItem(STORAGE_PREFIX + resolvedToken);
       if (saved) {
         const parsed = JSON.parse(saved);
         mostrarResultado(parsed.target, parsed.gifts);
@@ -273,7 +292,7 @@
           const gifts = userData.gifts || [];
           mostrarResultado(target, gifts);
 
-          localStorage.setItem(STORAGE_PREFIX + token, JSON.stringify({ target, gifts }));
+          localStorage.setItem(STORAGE_PREFIX + resolvedToken, JSON.stringify({ target, gifts }));
         }, 3650);
       });
     }
